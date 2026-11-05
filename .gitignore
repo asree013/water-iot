@@ -1,5 +1,9 @@
-./stream-data/data/
-./api/.env
-./api/.env.prod
-./stream-data/.env
-./stream-data/dist/
+# Environment variables
+*.env
+.env
+.env.*
+
+# Datasets & Build artifacts
+stream-data/data/
+stream-data/dist/
+api/dist/
