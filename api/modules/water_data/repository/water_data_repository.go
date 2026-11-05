@@ -20,42 +20,43 @@ func NewWaterDataRepository(db *gorm.DB) entities.WaterDataRepository {
 
 // Delete implements [entities.WaterDataRepository].
 func (w *waterDataRepository) Delete(id uint) (entities.WaterData, error) {
-	panic("unimplemented")
+	data, err := w.FindById(id)
+	if err != nil {
+		return entities.WaterData{}, nil
+	}
+	return data, nil
 }
 
 // FindAll implements [entities.WaterDataRepository].
 func (w *waterDataRepository) FindAll() ([]entities.WaterData, error) {
-	panic("unimplemented")
+	var list []entities.WaterData
+	if err := w.db.Order("id desc").Find(&list).Error; err != nil {
+		return nil, err
+	}
+	return list, nil
 }
 
 // FindById implements [entities.WaterDataRepository].
 func (w *waterDataRepository) FindById(id uint) (entities.WaterData, error) {
-	panic("unimplemented")
+	var data entities.WaterData
+	if err := w.db.First(&data, id).Error; err != nil {
+		return entities.WaterData{}, err
+	}
+	return data, nil
 }
 
 // Save implements [entities.WaterDataRepository].
 func (w *waterDataRepository) Save(data entities.WaterData) (entities.WaterData, error) {
-	panic("unimplemented")
+	if err := w.db.Create(&data).Error; err != nil {
+		return entities.WaterData{}, err
+	}
+	return data, nil
 }
 
 // Update implements [entities.WaterDataRepository].
 func (w *waterDataRepository) Update(data entities.WaterData) (entities.WaterData, error) {
-	panic("unimplemented")
+	if err := w.db.Save(&data).Error; err != nil {
+		return entities.WaterData{}, err
+	}
+	return data, nil
 }
-
-// type WaterData struct {
-// 	Pressure         float64 `json:"pressure"`
-// 	FlowRate         float64 `json:"flow_rate"`
-// 	Temperature      float64 `json:"temperature"`
-// 	Vibration        float64 `json:"vibration"`
-// 	RPM              float64 `json:"rpm"`
-// 	OperationalHours int     `json:"operational_hours"`
-// 	Zone             string  `json:"zone"`
-// 	Block            string  `json:"block"`
-// 	Pipe             string  `json:"pipe"`
-// 	LocationCode     string  `json:"location_code"`
-// 	Latitude         float64 `json:"latitude"`
-// 	Longitude        float64 `json:"longitude"`
-// 	LeakageFlag      int     `json:"leakage_flag"`
-// 	Timestamp        int64   `json:"timestamp"` // Unix timestamp เพิ่มความสมจริงของ IoT
-// }
