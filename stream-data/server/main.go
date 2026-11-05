@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"strconv"
 	"time"
+
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
-// หมายเหตุ tag json: ไม่ควรมีเว้นวรรคหลังเครื่องหมายโคลอน เช่น `json:"pressure"`
 type IoTData struct {
 	Pressure         float64 `json:"pressure"`
 	FlowRate         float64 `json:"flow_rate"`
@@ -26,6 +26,7 @@ type IoTData struct {
 	Latitude         float64 `json:"latitude"`
 	Longitude        float64 `json:"longitude"`
 	LeakageFlag      int     `json:"leakage_flag"`
+	Timestamp        int64   `json:"timestamp"` // Unix timestamp เพิ่มความสมจริงของ IoT
 }
 
 func parseFloat(s string) float64 {
@@ -53,25 +54,30 @@ func main() {
 	}
 
 	dataRows := records[1:]
-	fmt.Printf("Loaded %d rows from dataset. Starting UDP stream...\n", len(dataRows))
+	fmt.Printf("Loaded %d rows from dataset. Starting MQTT IoT simulation...\n", len(dataRows))
 
-	// 1. กำหนด IP และ Port ปลายทางของ UDP (เช่น localhost:7672 หรือ service_name ใน Docker)
-	targetAddr := "127.0.0.1:7672"
-	udpAddr, err := net.ResolveUDPAddr("udp", targetAddr)
-	if err != nil {
-		log.Fatalf("Failed to resolve UDP address: %v", err)
+	// ดึง Broker URL จาก Environment Variable ถ้าไม่มีให้ใช้ localhost:1883
+	brokerURL := os.Getenv("MQTT_BROKER")
+	if brokerURL == "" {
+		brokerURL = "tcp://localhost:1883"
 	}
 
-	// 2. สร้าง UDP Connection
-	conn, err := net.DialUDP("udp", nil, udpAddr)
-	if err != nil {
-		log.Fatalf("Failed to dial UDP: %v", err)
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(brokerURL)
+	opts.SetClientID("water_iot_stream_publisher")
+	opts.SetAutoReconnect(true)
+	opts.SetConnectRetry(true)
+	opts.SetConnectRetryInterval(2 * time.Second)
+
+	client := mqtt.NewClient(opts)
+	fmt.Printf("Connecting to MQTT Broker at %s ...\n", brokerURL)
+	if token := client.Connect(); token.Wait() && token.Error() != nil {
+		log.Fatalf("Failed to connect to MQTT broker: %v", token.Error())
 	}
-	defer conn.Close()
+	defer client.Disconnect(250)
+	fmt.Println("Connected to MQTT Broker successfully!")
 
-	fmt.Printf("Streaming UDP packets to %s ...\n", targetAddr)
-
-	ticker := time.NewTicker(500 * time.Millisecond) // ปรับความเร็วในการพ่นข้อมูลได้ตามต้องการ เช่น ทุกๆ 500ms
+	ticker := time.NewTicker(1 * time.Second) // ส่งข้อมูลทุกๆ 1 วินาที
 	defer ticker.Stop()
 
 	rowIndex := 0
@@ -98,22 +104,24 @@ func main() {
 			Latitude:         parseFloat(row[10]),
 			Longitude:        parseFloat(row[11]),
 			LeakageFlag:      parseInt(row[12]),
+			Timestamp:        time.Now().Unix(),
 		}
 
-		jsonValue, err := json.Marshal(data)
+		jsonPayload, err := json.Marshal(data)
 		if err != nil {
 			log.Printf("JSON marshal error: %v", err)
 			continue
 		}
 
-		// 3. พ่นแพ็กเก็ต UDP ออกไป (Fire-and-forget)
-		_, err = conn.Write(jsonValue)
-		if err != nil {
-			log.Printf("Error sending UDP packet: %v", err)
-			continue
-		}
+		// Topic ตามมาตรฐาน IoT: แบ่งตาม Zone และ Pipe
+		// เช่น water-iot/sensors/Zone_A/Pipe_01
+		topic := fmt.Sprintf("water-iot/sensors/%s/%s", data.Zone, data.Pipe)
 
-		fmt.Printf("[UDP Stream] Sent row %d -> Zone: %s, Pipe: %s (%d bytes)\n",
-			rowIndex, data.Zone, data.Pipe, len(jsonValue))
+		// QoS 0 หรือ 1 (ใน IoT นิยม QoS 0 สำหรับ telemetry streaming)
+		token := client.Publish(topic, 0, false, jsonPayload)
+		token.Wait()
+
+		fmt.Printf("[MQTT Sent] Row %d -> Topic: %s | Pressure: %.2f | Flow: %.2f\n",
+			rowIndex, topic, data.Pressure, data.FlowRate)
 	}
 }

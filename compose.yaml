@@ -1,6 +1,14 @@
 version: '3.8'
 
 services:
+  mqtt_broker:
+    image: eclipse-mosquitto:2
+    container_name: water_mqtt_broker
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+
   mysql_db:
     image: mysql:8.0
     container_name: water_mysql
@@ -13,30 +21,34 @@ services:
       - mysql_data:/var/lib/mysql
 
   go_api:
-    build: ./api-go
+    build: ./go-api
     container_name: water_go_api
     ports:
       - "8080:8080"
     environment:
       - DB_HOST=mysql_db
+      - MQTT_BROKER=tcp://mqtt_broker:1883
     depends_on:
       - mysql_db
+      - mqtt_broker
 
   go_stream:
     build: ./stream-data
     container_name: water_go_stream
-    ports:
-      - "7672:7672"
+    environment:
+      - MQTT_BROKER=tcp://mqtt_broker:1883
     depends_on:
-      - mysql_db
+      - mqtt_broker
 
   python_etl:
-    build: ./etl-python
+    build: ./python-etl
     container_name: water_python_etl
     environment:
       - DB_HOST=mysql_db
+      - MQTT_BROKER=tcp://mqtt_broker:1883
     depends_on:
       - mysql_db
+      - mqtt_broker
 
 volumes:
   mysql_data:
