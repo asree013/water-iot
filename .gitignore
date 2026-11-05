@@ -1,1 +1,5 @@
 ./stream-data/data/
+./api/.env
+./api/.env.prod
+./stream-data/.env
+./stream-data/dist/
