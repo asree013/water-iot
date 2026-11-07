@@ -20,6 +20,7 @@ type Configs struct {
 }
 
 type AppConfig struct {
+	Host string
 	Port string
 	Env  string
 }
@@ -87,6 +88,7 @@ func LoadConfig() *Configs {
 
 	return &Configs{
 		App: AppConfig{
+			Host: getEnv("APP_HOST", "0.0.0.0"),
 			Port: getEnv("APP_PORT", "8080"),
 			Env:  getEnv("APP_ENV", "development"),
 		},
