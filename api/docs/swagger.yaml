@@ -1,0 +1,92 @@
+basePath: /
+definitions:
+  entities.WaterDataReq:
+    properties:
+      block:
+        type: string
+      flow_rate:
+        type: number
+      latitude:
+        type: number
+      leakage_flag:
+        type: integer
+      location_code:
+        type: string
+      longitude:
+        type: number
+      operational_hours:
+        type: integer
+      pipe:
+        type: string
+      pressure:
+        type: number
+      rpm:
+        type: number
+      temperature:
+        type: number
+      timestamp:
+        type: integer
+      vibration:
+        type: number
+      zone:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API documentation for Water IoT System
+  title: Water IoT API
+  version: "1.0"
+paths:
+  /api/v1/water-data/telemetry:
+    get:
+      description: ดึงข้อมูล Telemetry ทั้งหมดล่าสุด
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get Latest Telemetry Data
+      tags:
+      - Water Data
+    post:
+      consumes:
+      - application/json
+      description: บันทึกข้อมูล Telemetry จากเซ็นเซอร์ IoT
+      parameters:
+      - description: Telemetry Data Payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/entities.WaterDataReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Save Telemetry Data
+      tags:
+      - Water Data
+swagger: "2.0"

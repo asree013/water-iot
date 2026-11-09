@@ -1,0 +1,137 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API documentation for Water IoT System",
+        "title": "Water IoT API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/api/v1/water-data/telemetry": {
+            "get": {
+                "description": "ดึงข้อมูล Telemetry ทั้งหมดล่าสุด",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Water Data"
+                ],
+                "summary": "Get Latest Telemetry Data",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "บันทึกข้อมูล Telemetry จากเซ็นเซอร์ IoT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Water Data"
+                ],
+                "summary": "Save Telemetry Data",
+                "parameters": [
+                    {
+                        "description": "Telemetry Data Payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.WaterDataReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "entities.WaterDataReq": {
+            "type": "object",
+            "properties": {
+                "block": {
+                    "type": "string"
+                },
+                "flow_rate": {
+                    "type": "number"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "leakage_flag": {
+                    "type": "integer"
+                },
+                "location_code": {
+                    "type": "string"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "operational_hours": {
+                    "type": "integer"
+                },
+                "pipe": {
+                    "type": "string"
+                },
+                "pressure": {
+                    "type": "number"
+                },
+                "rpm": {
+                    "type": "number"
+                },
+                "temperature": {
+                    "type": "number"
+                },
+                "timestamp": {
+                    "type": "integer"
+                },
+                "vibration": {
+                    "type": "number"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
