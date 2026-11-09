@@ -7,3 +7,10 @@
 stream-data/data/
 stream-data/dist/
 api/dist/
+
+# Files Build
+*bin/*
+
+
+# OS files
+.DS_Store
