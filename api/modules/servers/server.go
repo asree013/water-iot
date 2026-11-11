@@ -2,6 +2,11 @@ package servers
 
 import (
 	"api/config"
+	streamSubscribers "api/modules/stream_data/subscribers"
+	streamUsecase "api/modules/stream_data/usecase"
+	_waterDataRepository "api/modules/water_data/repository"
+	_waterDataUseCase "api/modules/water_data/usecases"
+	"api/pkg/mqtt"
 	"api/pkg/utils"
 	"log"
 	"os"
@@ -30,6 +35,21 @@ func NewServers(cfg *config.Configs, db *gorm.DB) *Server {
 
 func (s *Server) Start() {
 	s.MapHandler()
+
+	mqttClient, err := mqtt.NewMqttClient(s.cfg.MQTT.BrokerURL)
+	if err != nil {
+		log.Printf("[Warning] MQTT not connected: %v", err)
+	} else {
+		defer mqttClient.Disconnect(250)
+		// ประกอบ Clean Architecture: Repo -> WaterDataUseCase -> StreamDataUseCase -> Subscriber
+		waterDataRepo := _waterDataRepository.NewWaterDataRepository(s.db)
+		waterDataUseCase := _waterDataUseCase.NewWaterDataUseCase(waterDataRepo)
+		streamDataUseCase := streamUsecase.NewStreamDataUseCase(waterDataUseCase)
+		subscriber := streamSubscribers.NewStreamDataSubscriber(mqttClient, streamDataUseCase)
+		if err := subscriber.Subscribe("water-iot/sensors/#"); err != nil {
+			log.Printf("[Warning] Failed to subscribe to MQTT topic: %v", err)
+		}
+	}
 
 	fiberUrl, err := utils.ConnectionUrlBuilder("fiber", s.cfg)
 	if err != nil {
