@@ -27,7 +27,16 @@ func (d DMAZoneRepository) GetById(id int) (entities.TDMAZone, error) {
 
 // Gets implements [entities.TDMAZoneRepo].
 func (d DMAZoneRepository) Gets(page *int, limit *int) ([]entities.TDMAZone, error) {
-	panic("unimplemented")
+	var data []entities.TDMAZone
+	query := d.db.Model(&entities.TDMAZone{})
+	if page != nil && limit != nil {
+		query = query.Offset((*page - 1) * *limit).Limit(*limit)
+	}
+
+	if err := query.Find(&data).Error; err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 // Update implements [entities.TDMAZoneRepo].
