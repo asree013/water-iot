@@ -3,6 +3,9 @@
 .env
 .env.*
 
+# CSV files
+*.csv
+
 # Datasets & Build artifacts
 stream-data/data/
 stream-data/dist/
