@@ -1,19 +1,19 @@
-# 🌊 PWA Water-IoT & Big Data Management System
+# 🌊 Water-IoT & Data Management System
 
-ระบบบริหารจัดการข้อมูลขนาดใหญ่และการตรวจวัด IoT สำหรับติดตาม วิเคราะห์น้ำสูญเสีย (Non-Revenue Water: NRW) และเฝ้าระวังแรงดันน้ำประปา ตามข้อกำหนดของ**การประปาส่วนภูมิภาค (กปภ.)**
+ระบบบริหารจัดการข้อมูลการตรวจวัด IoT สำหรับติดตาม วิเคราะห์แรงดันน้ำประปา และคำนวณอัตราน้ำสูญเสีย (Non-Revenue Water: NRW) ในพื้นที่จ่ายน้ำย่อย
 
 ---
 
-## 📌 ภาพรวมโครงการ (Project Overview)
+## 📌 ภาพรวมระบบ (Project Overview)
 
-โครงการนี้พัฒนาขึ้นเพื่อยกระดับการบริหารจัดการข้อมูลของ กปภ. ให้เป็นระบบรวมศูนย์ (Single Source of Truth) รองรับทั้งการประมวลผลข้อมูลสตรีมมิ่งแบบเรียลไทม์ (**Real-Time IoT Streaming**) ผ่าน **Mosquitto MQTT Broker** และการรวบรวมข้อมูลจากระบบเดิม (**Legacy Systems**) เช่น **SWMAP, DMAMA, GIS, OCS, SAP** มาจัดเก็บในฐานข้อมูลกลาง เพื่อนำไปแสดงผลบน **Executive Dashboard** และสนับสนุนการตัดสินใจเชิงกลยุทธ์
+ระบบถูกออกแบบมาเพื่อเป็นศูนย์กลางในการรวบรวมและวิเคราะห์ข้อมูลน้ำประปา รองรับทั้งการรับข้อมูลสตรีมมิ่งแบบเรียลไทม์ (**Real-Time IoT Streaming**) ผ่าน **Mosquitto MQTT Broker** และการจัดเก็บข้อมูลโครงสร้างพื้นฐาน เช่น พื้นที่จ่ายน้ำย่อย (DMA), ข้อมูลแนวท่อและสินทรัพย์ (Pipe Assets), และประวัติการแจ้งซ่อมท่อแตกรั่ว
 
-- **Backend API:** Go (Golang) + Fiber v2 + GORM + Clean Architecture
+- **Backend API:** Go (Golang) + Fiber v2 + GORM (Clean Architecture)
 - **Database:** MySQL 8.0
 - **Message Broker:** Eclipse Mosquitto MQTT (Port 1883)
 - **API Documentation:** Scalar API Reference (`http://localhost:8080/docs`)
 - **IoT Streaming Simulator:** โมดูล `stream-data` จำลองส่งข้อมูลเซ็นเซอร์ทุก 1 วินาที
-- **Batch Data Pipeline:** โมดูล `python-etl` ทำ Data Validation, Cleansing และ Dead Letter Queue (DLQ)
+- **Data Pipeline:** โมดูล `python-etl` สำหรับ Data Validation, Cleansing และโหลดข้อมูล
 
 ---
 
@@ -22,12 +22,12 @@
 ---
 
 ### 1. ตาราง `water_data` (Real-time Telemetry Data)
-> **วัตถุประสงค์:** จัดเก็บข้อมูลการตรวจวัดสดจากเซ็นเซอร์ IoT ตามสถานีสูบน้ำและแนวท่อส่งน้ำผ่าน MQTT
+> จัดเก็บข้อมูลการตรวจวัดสดจากเซ็นเซอร์ IoT ตามแนวท่อและสถานีสูบน้ำผ่าน MQTT
 
 | ชื่อฟิลด์ (Field) | ประเภทข้อมูล (Type) | คีย์ (Key) | ว่างได้ (Null) | คำอธิบาย (Description) | ตัวอย่างข้อมูล (Example) |
 | :--- | :--- | :---: | :---: | :--- | :--- |
-| `id` | `BIGINT UNSIGNED` | **PK** | No | ลำดับไอดีของข้อมูล (Auto Increment) | `1` |
-| `zone` | `VARCHAR(255)` | - | Yes | โซนพื้นที่ที่ติดตั้งเซ็นเซอร์ (ผูกกับ DMA) | `"Zone_A"` |
+| `id` | `BIGINT UNSIGNED` | **PK** | No | รหัสลำดับข้อมูล (Auto Increment) | `1` |
+| `zone` | `VARCHAR(255)` | - | Yes | โซนพื้นที่ที่ติดตั้งเซ็นเซอร์ | `"Zone_A"` |
 | `pipe` | `VARCHAR(255)` | - | Yes | รหัสเส้นท่อที่ติดตั้งเซ็นเซอร์ | `"Pipe_01"` |
 | `pressure` | `DOUBLE` | - | Yes | ค่าแรงดันน้ำในท่อ (bar) | `2.85` |
 | `flow_rate` | `DOUBLE` | - | Yes | อัตราการไหลของน้ำ (m³/h) | `45.20` |
@@ -45,16 +45,16 @@
 ---
 
 ### 2. ตาราง `tdma_zones` (DMA / Zone Master Data)
-> **วัตถุประสงค์:** จัดเก็บข้อมูลพื้นที่จ่ายน้ำย่อยจากระบบ **DMAMA** ใช้บริหารจัดการแรงดันและคำนวณน้ำสูญเสีย (NRW)
+> จัดเก็บข้อมูลพื้นที่จ่ายน้ำย่อย (District Metered Area) ใช้บริหารจัดการแรงดันและคำนวณน้ำสูญเสีย (NRW)
 
 | ชื่อฟิลด์ (Field) | ประเภทข้อมูล (Type) | คีย์ (Key) | ว่างได้ (Null) | คำอธิบาย (Description) | ตัวอย่างข้อมูล (Example) |
 | :--- | :--- | :---: | :---: | :--- | :--- |
-| `id` | `BIGINT UNSIGNED` | **PK** | No | ลำดับไอดีของโซน (Auto Increment) | `1` |
+| `id` | `BIGINT UNSIGNED` | **PK** | No | รหัสลำดับของพื้นที่จ่ายน้ำ (Auto Increment) | `1` |
 | `dma_code` | `VARCHAR(50)` | **UK** | No | รหัสประจำพื้นที่จ่ายน้ำย่อย (Unique Key) | `"DMA-01"` |
 | `dma_name` | `VARCHAR(100)` | - | Yes | ชื่อพื้นที่จ่ายน้ำย่อย | `"โซนเทศบาลนครหาดใหญ่ 1"` |
-| `branch_name` | `VARCHAR(100)` | - | Yes | สาขา กปภ. ที่รับผิดชอบ (นำร่อง 4 สาขา) | `"สาขาหาดใหญ่"` |
-| `region_code` | `VARCHAR(20)` | - | Yes | รหัสเขตการประปา (10 เขตทั่วประเทศ) | `"เขต 5"` |
-| `target_pressure` | `DOUBLE` | - | Yes | แรงดันน้ำเป้าหมายในโซน (bar) | `2.5` |
+| `branch_name` | `VARCHAR(100)` | - | Yes | สาขาที่รับผิดชอบพื้นที่ | `"สาขาหาดใหญ่"` |
+| `region_code` | `VARCHAR(20)` | - | Yes | รหัสเขตพื้นที่ | `"เขต 5"` |
+| `target_pressure` | `DOUBLE` | - | Yes | แรงดันน้ำเป้าหมายที่ต้องควบคุม (bar) | `2.5` |
 | `total_inflow` | `DOUBLE` | - | Yes | ปริมาณน้ำรวมที่จ่ายเข้าโซน (ลบ.ม./วัน) | `10000.0` |
 | `billed_consumption`| `DOUBLE` | - | Yes | ปริมาณน้ำที่จำหน่ายได้จริง (ลบ.ม./วัน) | `8200.0` |
 | `nrw_ratio` | `DOUBLE` | - | Yes | อัตราน้ำสูญเสีย % `((Inflow - Billed)/Inflow)*100` | `18.0` |
@@ -66,20 +66,20 @@
 ---
 
 ### 3. ตาราง `t_pipe_assets` (Pipe & Asset Master Data)
-> **วัตถุประสงค์:** จัดเก็บข้อมูลทะเบียนสินทรัพย์ท่อส่งน้ำจากระบบ **SAP** ผสานกับพิกัดแนวท่อจากระบบ **SWMAP/GIS**
+> จัดเก็บข้อมูลทะเบียนสินทรัพย์ท่อส่งน้ำและพิกัดแนวท่อ
 
 | ชื่อฟิลด์ (Field) | ประเภทข้อมูล (Type) | คีย์ (Key) | ว่างได้ (Null) | คำอธิบาย (Description) | ตัวอย่างข้อมูล (Example) |
 | :--- | :--- | :---: | :---: | :--- | :--- |
-| `id` | `BIGINT UNSIGNED` | **PK** | No | ลำดับไอดีสินทรัพย์ (Auto Increment) | `1` |
-| `asset_id` | `VARCHAR(50)` | **UK** | No | รหัสสินทรัพย์จาก SAP (ใช้ตรวจ DLQ) | `"AST-001"` |
+| `id` | `BIGINT UNSIGNED` | **PK** | No | รหัสลำดับสินทรัพย์ (Auto Increment) | `1` |
+| `asset_id` | `VARCHAR(50)` | **UK** | No | รหัสทะเบียนสินทรัพย์ | `"AST-001"` |
 | `pipe_id` | `VARCHAR(50)` | **IDX** | Yes | รหัสประจำเส้นท่อ | `"Pipe_01"` |
 | `dma_code` | `VARCHAR(50)` | **IDX** | Yes | รหัสโซน DMA ที่ท่อนี้สังกัดอยู่ | `"DMA-01"` |
-| `material` | `VARCHAR(50)` | - | Yes | วัสดุท่อ เช่น `HDPE`, `PVC`, `Ductile Iron` | `"HDPE"` |
+| `material` | `VARCHAR(50)` | - | Yes | ชนิดวัสดุท่อ เช่น `HDPE`, `PVC`, `Ductile Iron` | `"HDPE"` |
 | `diameter` | `DOUBLE` | - | Yes | ขนาดเส้นผ่านศูนย์กลางท่อ (มม.) | `150.0` |
 | `length` | `DOUBLE` | - | Yes | ความยาวของเส้นท่อ (เมตร) | `500.0` |
-| `installation_year`| `INT` | - | Yes | ปี ค.ศ. ที่ติดตั้งท่อ (ใช้คำนวณอายุท่อ) | `2018` |
-| `latitude` | `DOUBLE` | - | Yes | พิกัด GIS ละติจูด | `13.7563` |
-| `longitude` | `DOUBLE` | - | Yes | พิกัด GIS ลองจิจูด | `100.5018` |
+| `installation_year`| `INT` | - | Yes | ปี ค.ศ. ที่ติดตั้งท่อ | `2018` |
+| `latitude` | `DOUBLE` | - | Yes | พิกัดละติจูด | `13.7563` |
+| `longitude` | `DOUBLE` | - | Yes | พิกัดลองจิจูด | `100.5018` |
 | `status` | `VARCHAR(20)` | - | Yes | สถานะสินทรัพย์ (`ACTIVE`, `INACTIVE`, `REPLACED`) | `"ACTIVE"` |
 | `created_at` | `DATETIME(3)` | - | Yes | วันเวลาที่สร้างข้อมูล | `2026-11-12 21:00:00` |
 | `updated_at` | `DATETIME(3)` | - | Yes | วันเวลาที่แก้ไขข้อมูลล่าสุด | `2026-11-12 21:00:00` |
@@ -87,12 +87,12 @@
 ---
 
 ### 4. ตาราง `t_leakage_incidents` (Leakage & Maintenance Records)
-> **วัตถุประสงค์:** จัดเก็บประวัติการรับแจ้งเหตุและบันทึกการซ่อมแซมท่อแตกรั่วจากระบบ **OCS**
+> จัดเก็บประวัติการรับแจ้งเหตุและการซ่อมแซมท่อแตกรั่ว
 
 | ชื่อฟิลด์ (Field) | ประเภทข้อมูล (Type) | คีย์ (Key) | ว่างได้ (Null) | คำอธิบาย (Description) | ตัวอย่างข้อมูล (Example) |
 | :--- | :--- | :---: | :---: | :--- | :--- |
-| `id` | `BIGINT UNSIGNED` | **PK** | No | ลำดับไอดีของบันทึกเหตุการณ์ (Auto Increment) | `1` |
-| `ticket_id` | `VARCHAR(50)` | **UK** | No | รหัสใบแจ้งซ่อมจากระบบ OCS | `"OCS-2026-001"` |
+| `id` | `BIGINT UNSIGNED` | **PK** | No | รหัสลำดับของบันทึกเหตุการณ์ (Auto Increment) | `1` |
+| `ticket_id` | `VARCHAR(50)` | **UK** | No | รหัสใบแจ้งซ่อม | `"OCS-2026-001"` |
 | `dma_code` | `VARCHAR(50)` | **IDX** | Yes | โซน DMA ที่เกิดเหตุ | `"DMA-01"` |
 | `pipe_id` | `VARCHAR(50)` | - | Yes | รหัสเส้นท่อที่เกิดเหตุ | `"Pipe_01"` |
 | `incident_type` | `VARCHAR(50)` | - | Yes | ประเภทเหตุการณ์ เช่น `Main Burst`, `Service Leak` | `"Main Burst"` |
@@ -120,7 +120,7 @@
    cd api
    go run apps/main.go
    ```
-   - เข้าดูเอกสาร API เอกสารสไตล์ **Scalar UI**: `http://localhost:8080/docs`
+   - เอกสาร API (Scalar UI): `http://localhost:8080/docs`
    - ตรวจสอบสถานะเซิร์ฟเวอร์: `http://localhost:8080/health`
 3. **รันตัวจำลอง IoT Sensor Streaming:**
    ```bash
