@@ -1,6 +1,7 @@
 package servers
 
 import (
+	_sseController "api/modules/server_send_event/controller"
 	_waterDataHttp "api/modules/water_data/controllers"
 	_waterDataRepository "api/modules/water_data/repository"
 	_waterDataUseCase "api/modules/water_data/usecases"
@@ -45,22 +46,27 @@ func (s *Server) MapHandler() error {
 	})
 
 	v1 := s.app.Group("/api/v1")
-
+	// route: /api/v1/water-data
 	waterDataGroup := v1.Group("/water-data")
 	waterDataRepository := _waterDataRepository.NewWaterDataRepository(s.db)
-	waterDataUseCalse := _waterDataUseCase.NewWaterDataUseCase(waterDataRepository)
-	_waterDataHttp.NewWaterDataController(waterDataGroup, waterDataUseCalse)
+	waterDataUseCase := _waterDataUseCase.NewWaterDataUseCase(waterDataRepository)
+	_waterDataHttp.NewWaterDataController(waterDataGroup, waterDataUseCase)
 
+	// route: /api/v1/dma-zone
 	dmazoneGroup := v1.Group("/dma-zone")
 	dmazoneRepository := _dmazoneRepository.NewDMAZoneRepository(s.db)
 	dmazoneUseCase := _dmazoneUseCase.NewDMAZoneUseCase(dmazoneRepository)
 	_dmazoneHttp.NewDMAZoneController(dmazoneGroup, dmazoneUseCase)
 
+	// route: /api/v1/sse-water-data
+	sseGroup := v1.Group("/sse-water-data")
+	_sseController.NewSSEController(sseGroup, s.sseUseCase)
+
 	s.app.Use(func(c *fiber.Ctx) error {
-		return c.Status(fiber.ErrInternalServerError.Code).JSON(fiber.Map{
-			"status":      fiber.ErrInternalServerError.Message,
-			"status_code": fiber.ErrInternalServerError.Code,
-			"message":     "error, end point not found",
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":      "Not Found",
+			"status_code": fiber.StatusNotFound,
+			"message":     "error, endpoint not found",
 			"result":      nil,
 		})
 	})

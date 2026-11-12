@@ -2,6 +2,7 @@ package servers
 
 import (
 	"api/config"
+	_sseUseCase "api/modules/server_send_event/usecase"
 	streamSubscribers "api/modules/stream_data/subscribers"
 	streamUsecase "api/modules/stream_data/usecase"
 	_waterDataRepository "api/modules/water_data/repository"
@@ -18,9 +19,10 @@ import (
 )
 
 type Server struct {
-	app *fiber.App
-	db  *gorm.DB
-	cfg *config.Configs
+	app        *fiber.App
+	db         *gorm.DB
+	cfg        *config.Configs
+	sseUseCase _sseUseCase.SSEUseCase
 }
 
 func NewServers(cfg *config.Configs, db *gorm.DB) *Server {
@@ -28,8 +30,9 @@ func NewServers(cfg *config.Configs, db *gorm.DB) *Server {
 		app: fiber.New(fiber.Config{
 			AppName: "Water IOT API",
 		}),
-		cfg: cfg,
-		db:  db,
+		cfg:        cfg,
+		db:         db,
+		sseUseCase: _sseUseCase.NewSSEUseCase(),
 	}
 }
 
@@ -44,7 +47,7 @@ func (s *Server) Start() {
 		// ประกอบ Clean Architecture: Repo -> WaterDataUseCase -> StreamDataUseCase -> Subscriber
 		waterDataRepo := _waterDataRepository.NewWaterDataRepository(s.db)
 		waterDataUseCase := _waterDataUseCase.NewWaterDataUseCase(waterDataRepo)
-		streamDataUseCase := streamUsecase.NewStreamDataUseCase(waterDataUseCase)
+		streamDataUseCase := streamUsecase.NewStreamDataUseCase(waterDataUseCase, s.sseUseCase)
 		subscriber := streamSubscribers.NewStreamDataSubscriber(mqttClient, streamDataUseCase)
 		if err := subscriber.Subscribe("water-iot/sensors/#"); err != nil {
 			log.Printf("[Warning] Failed to subscribe to MQTT topic: %v", err)

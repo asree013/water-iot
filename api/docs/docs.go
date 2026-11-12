@@ -260,6 +260,19 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/sse-water-data/telemetry": {
+            "get": {
+                "description": "เปิดการเชื่อมต่อ Server-Sent Events เพื่อรับข้อมูลเซ็นเซอร์ IoT แบบสดๆ",
+                "produces": [
+                    "text/event-stream"
+                ],
+                "tags": [
+                    "SSE"
+                ],
+                "summary": "Stream Real-time Telemetry (SSE)",
+                "responses": {}
+            }
+        },
         "/api/v1/water-data/telemetry": {
             "get": {
                 "description": "ดึงข้อมูล Telemetry ทั้งหมดล่าสุด",

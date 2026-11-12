@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"api/modules/entities"
+	"api/modules/server_send_event/usecase"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,17 +15,20 @@ type StreamDataUseCase interface {
 
 type streamDataUseCase struct {
 	waterDataUseCase entities.WaterDataUseCase
+	sseUseCase       usecase.SSEUseCase
 }
 
 // Contructer
-func NewStreamDataUseCase(waterDataUseCase entities.WaterDataUseCase) StreamDataUseCase {
+func NewStreamDataUseCase(waterDataUseCase entities.WaterDataUseCase, sseUseCase usecase.SSEUseCase) StreamDataUseCase {
 	return &streamDataUseCase{
 		waterDataUseCase: waterDataUseCase,
+		sseUseCase:       sseUseCase,
 	}
 }
 
 // ConsumeTelemetry implements [StreamDataUseCase].
 func (s *streamDataUseCase) ConsumeTelemetry(payload []byte) error {
+	s.sseUseCase.Broadcast(payload)
 	var req entities.WaterDataReq
 	if err := json.Unmarshal(payload, &req); err != nil {
 		return fmt.Errorf("Invalid json payload: %w", err)
