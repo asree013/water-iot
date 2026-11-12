@@ -127,3 +127,81 @@
    cd stream-data
    go run server/main.go
    ```
+
+---
+
+## 📡 Real-Time SSE (Server-Sent Events)
+
+ระบบรองรับการสตรีมข้อมูลเซ็นเซอร์แบบ **Real-Time** ผ่าน [Server-Sent Events (SSE)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) โดย backend จะ Broadcast ข้อมูลจาก MQTT ไปยัง client ทุกคนที่กำลังเชื่อมต่ออยู่
+
+### 🔗 Endpoint
+
+```
+GET http://localhost:8080/api/v1/sse-water-data/telemetry
+```
+
+### 📦 Data Flow
+
+```
+IoT Sensor
+    │
+    ▼  MQTT Publish
+Mosquitto Broker (tcp://localhost:1883)
+    │  topic: water-iot/sensors/#
+    ▼
+StreamDataSubscriber (MQTT Consumer)
+    │
+    ▼
+StreamDataUseCase.ConsumeTelemetry()
+    │  ├─► SSEUseCase.Broadcast()  ──► SSE Client 1
+    │                               ──► SSE Client 2
+    │                               ──► SSE Client N
+    └─► WaterDataUseCase.SaveTelemetry()
+            │
+            ▼
+        MySQL (water_data table)
+```
+
+### 🌐 ทดสอบด้วย Browser (ui-apps/index.html)
+
+เปิดไฟล์ `ui-apps/index.html` ใน browser ขณะที่ server กำลังรันอยู่ จะเห็น live table แสดงข้อมูลเซ็นเซอร์แบบ real-time
+
+### 🧪 ทดสอบด้วย curl
+
+```bash
+curl -N http://localhost:8080/api/v1/sse-water-data/telemetry
+```
+
+ตัวอย่าง event ที่ได้รับ:
+
+```
+data: {"zone":"Zone_A","pipe":"Pipe_01","pressure":2.85,"flow_rate":45.20,"timestamp":1731427200}
+```
+
+### ⚙️ รายละเอียดทางเทคนิค
+
+| รายการ | รายละเอียด |
+|--------|-----------|
+| Protocol | Server-Sent Events (SSE) over HTTP/1.1 |
+| Content-Type | `text/event-stream` |
+| Transport | Chunked Transfer-Encoding |
+| Connection | Long-lived (keep-alive) |
+| Multi-client | รองรับ client หลายตัวพร้อมกัน (Hub pattern) |
+| Auto-reconnect | Browser reconnect อัตโนมัติเมื่อ connection หลุด |
+| Broadcast source | MQTT topic `water-iot/sensors/#` |
+
+### 🏗️ Architecture (SSE Module)
+
+```
+api/modules/
+├── server_send_event/
+│   ├── controller/
+│   │   └── sse_controller.go    # รับ HTTP request, hijack connection ด้วย fasthttp.StreamWriter
+│   └── usecase/
+│       └── sse_usecase.go       # SSE Hub: Register / Unregister / Broadcast clients
+└── stream_data/
+    ├── usecase/
+    │   └── stream_data_usecase.go  # รับ MQTT payload → Broadcast SSE + บันทึก DB
+    └── subscribers/
+        └── stream_data_subscriber.go  # Subscribe MQTT topic
+```

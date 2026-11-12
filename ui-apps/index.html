@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PWA Water-IoT Live Stream</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #58a6ff;
+        }
+
+        #status {
+            margin-bottom: 10px;
+            font-size: 0.85em;
+            color: #8b949e;
+        }
+
+        #status.connected {
+            color: #3fb950;
+        }
+
+        #status.error {
+            color: #f85149;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #161b22;
+            color: #58a6ff;
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #30363d;
+        }
+
+        td {
+            padding: 7px 12px;
+            border-bottom: 1px solid #21262d;
+        }
+
+        tr:hover td {
+            background: #161b22;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #1f6feb33;
+            color: #58a6ff;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Real-time IoT Telemetry</h2>
+    <div id="status">⏳ Connecting to SSE...</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Time</th>
+                <th>Zone</th>
+                <th>Pipe</th>
+                <th>Pressure (bar)</th>
+                <th>Flow Rate (m³/h)</th>
+            </tr>
+        </thead>
+        <tbody id="data-table"></tbody>
+    </table>
+
+    <script>
+        const MAX_ROWS = 50;
+        let rowCount = 0;
+
+        const statusEl = document.getElementById("status");
+        const tableBody = document.getElementById("data-table");
+
+        const eventSource = new EventSource("http://localhost:8080/api/v1/sse-water-data/telemetry");
+
+        eventSource.onopen = function () {
+            statusEl.textContent = "✅ Connected — receiving live data";
+            statusEl.className = "connected";
+        };
+
+        eventSource.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("Live IoT:", data);
+
+                rowCount++;
+                const now = new Date().toLocaleTimeString();
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${rowCount}</td>
+                    <td>${now}</td>
+                    <td><span class="tag">${data.zone ?? "-"}</span></td>
+                    <td>${data.pipe ?? "-"}</td>
+                    <td>${data.pressure?.toFixed(2) ?? "-"}</td>
+                    <td>${data.flow_rate?.toFixed(2) ?? "-"}</td>
+                `;
+
+                // เพิ่มแถวใหม่ที่บน
+                tableBody.insertBefore(row, tableBody.firstChild);
+
+                // จำกัดจำนวนแถว
+                while (tableBody.rows.length > MAX_ROWS) {
+                    tableBody.deleteRow(tableBody.rows.length - 1);
+                }
+            } catch (e) {
+                console.error("Parse error:", e, event.data);
+            }
+        };
+
+        eventSource.onerror = function () {
+            statusEl.textContent = "🔴 Connection lost — reconnecting automatically...";
+            statusEl.className = "error";
+        };
+    </script>
+</body>
+
+</html>
