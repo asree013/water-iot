@@ -5,6 +5,10 @@ import (
 	_waterDataRepository "api/modules/water_data/repository"
 	_waterDataUseCase "api/modules/water_data/usecases"
 
+	_dmazoneHttp "api/modules/dma_zone/controller"
+	_dmazoneRepository "api/modules/dma_zone/repository"
+	_dmazoneUseCase "api/modules/dma_zone/usecase"
+
 	"github.com/MarceloPetrucio/go-scalar-api-reference"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -46,6 +50,11 @@ func (s *Server) MapHandler() error {
 	waterDataRepository := _waterDataRepository.NewWaterDataRepository(s.db)
 	waterDataUseCalse := _waterDataUseCase.NewWaterDataUseCase(waterDataRepository)
 	_waterDataHttp.NewWaterDataController(waterDataGroup, waterDataUseCalse)
+
+	dmazoneGroup := v1.Group("/dma-zone")
+	dmazoneRepository := _dmazoneRepository.NewDMAZoneRepository(s.db)
+	dmazoneUseCase := _dmazoneUseCase.NewDMAZoneUseCase(dmazoneRepository)
+	_dmazoneHttp.NewDMAZoneController(dmazoneGroup, dmazoneUseCase)
 
 	s.app.Use(func(c *fiber.Ctx) error {
 		return c.Status(fiber.ErrInternalServerError.Code).JSON(fiber.Map{

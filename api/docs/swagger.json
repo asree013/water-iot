@@ -9,6 +9,251 @@
     "host": "localhost:8080",
     "basePath": "/",
     "paths": {
+        "/api/v1/dma-zone": {
+            "get": {
+                "description": "ดึงรายการพื้นที่จ่ายน้ำย่อย (DMA Zones) พร้อมรองรับ Pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "DMA Zone"
+                ],
+                "summary": "Get DMA Zones",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "เลขหน้า (Page number)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "จำนวนรายการต่อหน้า (Items per page)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "เพิ่มข้อมูล DMA Zone",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "DMA Zone"
+                ],
+                "summary": "Create DMA Zone",
+                "parameters": [
+                    {
+                        "description": "DMA Zone Data Payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.TDMAZone"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/dma-zone/{id}": {
+            "get": {
+                "description": "ดึงรายการพื้นที่จ่ายน้ำย่อย (DMA Zones) โดยเลือกข้อมูลจาก ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "DMA Zone"
+                ],
+                "summary": "Get DMA Zone By ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "DMA Zone ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "แก้ไขข้อมูลพื้นที่จ่ายน้ำย่อย (DMA Zone) ตาม ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "DMA Zone"
+                ],
+                "summary": "Update DMA Zone By ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "DMA Zone ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "DMA Zone Data Payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.TDMAZone"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "ลบข้อมูลพื้นที่จ่ายน้ำย่อย (DMA Zone) ตาม ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "DMA Zone"
+                ],
+                "summary": "Delete DMA Zone By ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "DMA Zone ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/water-data/telemetry": {
             "get": {
                 "description": "ดึงข้อมูล Telemetry ทั้งหมดล่าสุด",
@@ -86,6 +331,60 @@
         }
     },
     "definitions": {
+        "entities.TDMAZone": {
+            "type": "object",
+            "properties": {
+                "billed_consumption": {
+                    "description": "ปริมาณน้ำที่ขายได้ (ลบ.ม./วัน)",
+                    "type": "number"
+                },
+                "branch_name": {
+                    "description": "สาขา (ตาม TOR: นำร่อง 4 สาขา)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "customer_count": {
+                    "description": "จำนวนผู้ใช้น้ำในโซน",
+                    "type": "integer"
+                },
+                "dma_code": {
+                    "description": "รหัส DMA เช่น DMA-01",
+                    "type": "string"
+                },
+                "dma_name": {
+                    "description": "ชื่อโซน เช่น โซนเทศบาล 1",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nrw_ratio": {
+                    "description": "อัตราน้ำสูญเสีย % (Non-Revenue Water)",
+                    "type": "number"
+                },
+                "region_code": {
+                    "description": "เขต (ตาม TOR: 10 เขต)",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "NORMAL, WARNING, CRITICAL (ตามเกณฑ์แจ้งเตือน)",
+                    "type": "string"
+                },
+                "target_pressure": {
+                    "description": "แรงดันเป้าหมาย (bar) เช่น 2.5 (แนะนำ float64 เพื่อใช้เทียบกับ IoT)",
+                    "type": "number"
+                },
+                "total_inflow": {
+                    "description": "ปริมาณน้ำจ่ายเข้าโซน (ลบ.ม./วัน)",
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
         "entities.WaterDataReq": {
             "type": "object",
             "properties": {

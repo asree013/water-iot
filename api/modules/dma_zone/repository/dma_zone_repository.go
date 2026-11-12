@@ -12,17 +12,31 @@ type DMAZoneRepository struct {
 
 // Create implements [entities.TDMAZoneRepo].
 func (d DMAZoneRepository) Create(data entities.TDMAZone) (entities.TDMAZone, error) {
-	panic("unimplemented")
+	if err := d.db.Create(&data).Error; err != nil {
+		return entities.TDMAZone{}, err
+	}
+	return data, nil
 }
 
 // Delete implements [entities.TDMAZoneRepo].
-func (d DMAZoneRepository) Delete(id int) (entities.TDMAZone, error) {
-	panic("unimplemented")
+func (d DMAZoneRepository) Delete(id uint) (entities.TDMAZone, error) {
+	data, err := d.GetById(id)
+	if err != nil {
+		return entities.TDMAZone{}, err
+	}
+	if err := d.db.Delete(&data).Error; err != nil {
+		return entities.TDMAZone{}, err
+	}
+	return data, nil
 }
 
 // GetById implements [entities.TDMAZoneRepo].
-func (d DMAZoneRepository) GetById(id int) (entities.TDMAZone, error) {
-	panic("unimplemented")
+func (d DMAZoneRepository) GetById(id uint) (entities.TDMAZone, error) {
+	var data entities.TDMAZone
+	if err := d.db.First(&data, id).Error; err != nil {
+		return entities.TDMAZone{}, err
+	}
+	return data, nil
 }
 
 // Gets implements [entities.TDMAZoneRepo].
@@ -40,8 +54,15 @@ func (d DMAZoneRepository) Gets(page *int, limit *int) ([]entities.TDMAZone, err
 }
 
 // Update implements [entities.TDMAZoneRepo].
-func (d DMAZoneRepository) Update(data entities.TDMAZone) (entities.TDMAZone, error) {
-	panic("unimplemented")
+func (d DMAZoneRepository) Update(id uint, data entities.TDMAZone) (entities.TDMAZone, error) {
+	_, err := d.GetById(id)
+	if err != nil {
+		return entities.TDMAZone{}, nil
+	}
+	if err := d.db.Save(&data).Error; err != nil {
+		return entities.TDMAZone{}, err
+	}
+	return data, nil
 }
 
 func NewDMAZoneRepository(db *gorm.DB) entities.TDMAZoneRepo {

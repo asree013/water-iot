@@ -24,6 +24,9 @@ func (w *waterDataRepository) Delete(id uint) (entities.WaterData, error) {
 	if err != nil {
 		return entities.WaterData{}, nil
 	}
+	if err := w.db.Delete(&data).Error; err != nil {
+		return entities.WaterData{}, err
+	}
 	return data, nil
 }
 

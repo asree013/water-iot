@@ -23,7 +23,7 @@ func main() {
 		log.Fatalf("Database connection failded: %v", err)
 	}
 	// auto migrate table
-	if err := db.AutoMigrate(&entities.WaterData{}); err != nil {
+	if err := db.AutoMigrate(&entities.WaterData{}, &entities.TDMAZone{}); err != nil {
 		log.Printf("AutoMigrate warning: %v", err)
 	}
 

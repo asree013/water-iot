@@ -1,5 +1,45 @@
 basePath: /
 definitions:
+  entities.TDMAZone:
+    properties:
+      billed_consumption:
+        description: ปริมาณน้ำที่ขายได้ (ลบ.ม./วัน)
+        type: number
+      branch_name:
+        description: 'สาขา (ตาม TOR: นำร่อง 4 สาขา)'
+        type: string
+      created_at:
+        type: string
+      customer_count:
+        description: จำนวนผู้ใช้น้ำในโซน
+        type: integer
+      dma_code:
+        description: รหัส DMA เช่น DMA-01
+        type: string
+      dma_name:
+        description: ชื่อโซน เช่น โซนเทศบาล 1
+        type: string
+      id:
+        type: integer
+      nrw_ratio:
+        description: อัตราน้ำสูญเสีย % (Non-Revenue Water)
+        type: number
+      region_code:
+        description: 'เขต (ตาม TOR: 10 เขต)'
+        type: string
+      status:
+        description: NORMAL, WARNING, CRITICAL (ตามเกณฑ์แจ้งเตือน)
+        type: string
+      target_pressure:
+        description: แรงดันเป้าหมาย (bar) เช่น 2.5 (แนะนำ float64 เพื่อใช้เทียบกับ
+          IoT)
+        type: number
+      total_inflow:
+        description: ปริมาณน้ำจ่ายเข้าโซน (ลบ.ม./วัน)
+        type: number
+      updated_at:
+        type: string
+    type: object
   entities.WaterDataReq:
     properties:
       block:
@@ -38,6 +78,174 @@ info:
   title: Water IoT API
   version: "1.0"
 paths:
+  /api/v1/dma-zone:
+    get:
+      description: ดึงรายการพื้นที่จ่ายน้ำย่อย (DMA Zones) พร้อมรองรับ Pagination
+      parameters:
+      - default: 1
+        description: เลขหน้า (Page number)
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: จำนวนรายการต่อหน้า (Items per page)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get DMA Zones
+      tags:
+      - DMA Zone
+    post:
+      consumes:
+      - application/json
+      description: เพิ่มข้อมูล DMA Zone
+      parameters:
+      - description: DMA Zone Data Payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/entities.TDMAZone'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Create DMA Zone
+      tags:
+      - DMA Zone
+  /api/v1/dma-zone/{id}:
+    delete:
+      description: ลบข้อมูลพื้นที่จ่ายน้ำย่อย (DMA Zone) ตาม ID
+      parameters:
+      - description: DMA Zone ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Delete DMA Zone By ID
+      tags:
+      - DMA Zone
+    get:
+      description: ดึงรายการพื้นที่จ่ายน้ำย่อย (DMA Zones) โดยเลือกข้อมูลจาก ID
+      parameters:
+      - description: DMA Zone ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get DMA Zone By ID
+      tags:
+      - DMA Zone
+    put:
+      consumes:
+      - application/json
+      description: แก้ไขข้อมูลพื้นที่จ่ายน้ำย่อย (DMA Zone) ตาม ID
+      parameters:
+      - description: DMA Zone ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: DMA Zone Data Payload
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/entities.TDMAZone'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Update DMA Zone By ID
+      tags:
+      - DMA Zone
   /api/v1/water-data/telemetry:
     get:
       description: ดึงข้อมูล Telemetry ทั้งหมดล่าสุด
