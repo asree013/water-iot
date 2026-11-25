@@ -41,6 +41,6 @@ func (s *streamDataUseCase) ConsumeTelemetry(payload []byte) error {
 	if err := s.waterDataUseCase.SaveTelemetry(&req); err != nil {
 		return fmt.Errorf("failed to save telemetry to db: %w", err)
 	}
-	log.Printf("[StreamData] Saved: Zone=%s, Pipe=%s, Pressure=%.2f, Flow=%.2f", req.Zone, req.Pressure, req.FlowRate)
+	log.Printf("[StreamData] Saved: Zone=%s, Pipe=%s, Pressure=%.2f, Flow=%.2f", req.Zone, req.Pipe, req.Pressure, req.FlowRate)
 	return nil
 }

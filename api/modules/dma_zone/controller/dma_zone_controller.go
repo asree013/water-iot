@@ -64,11 +64,19 @@ func (d *DMAZoneController) GetDMAZone(c *fiber.Ctx) error {
 // @Produce      json
 // @Param        id   path      int  true  "DMA Zone ID"
 // @Success      200  {object}  map[string]interface{}
+// @Failure      400  {object}  map[string]interface{}
 // @Failure      404  {object}  map[string]interface{}
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /api/v1/dma-zone/{id} [get]
 func (d *DMAZoneController) GetDMAZoneById(c *fiber.Ctx) error {
 	id, err := strconv.ParseUint(c.Params("id"), 10, 64)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  fiber.ErrBadRequest.Code,
+			"message": "Invalid ID format",
+			"error":   err.Error(),
+		})
+	}
 	data, err := d.dmaZoneUseCase.FindDataById(uint(id))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -90,22 +98,23 @@ func (d *DMAZoneController) GetDMAZoneById(c *fiber.Ctx) error {
 // @Tags         DMA Zone
 // @Accept       json
 // @Produce      json
-// @Param        data  body      entities.TDMAZone  true  "DMA Zone Data Payload"
+// @Param        data  body      entities.TDMAZoneReq  true  "DMA Zone Data Payload"
 // @Success      201   {object}  map[string]interface{}
 // @Failure      400   {object}  map[string]interface{}
 // @Failure      500   {object}  map[string]interface{}
 // @Router       /api/v1/dma-zone [post]
 func (d *DMAZoneController) CreateDMAZone(c *fiber.Ctx) error {
-	req := new(entities.TDMAZone)
+	req := new(entities.TDMAZoneReq)
 	if err := c.BodyParser(req); err != nil {
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":  fiber.ErrBadRequest.Code,
 			"message": fiber.ErrBadRequest.Message,
 			"error":   err.Error(),
 		})
 	}
-	if _, err := d.dmaZoneUseCase.AddData(*req); err != nil {
-		return c.Status(fiber.ErrInternalServerError.Code).JSON(fiber.Map{
+	data, err := d.dmaZoneUseCase.AddData(*req)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  fiber.ErrInternalServerError.Code,
 			"message": fiber.ErrInternalServerError.Message,
 			"error":   err.Error(),
@@ -114,7 +123,7 @@ func (d *DMAZoneController) CreateDMAZone(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"status":  fiber.StatusCreated,
 		"message": "DMA Zone Created Successfully",
-		"data":    req,
+		"data":    data,
 	})
 }
 
@@ -124,17 +133,17 @@ func (d *DMAZoneController) CreateDMAZone(c *fiber.Ctx) error {
 // @Tags         DMA Zone
 // @Accept       json
 // @Produce      json
-// @Param        id    path      int                true  "DMA Zone ID"
-// @Param        data  body      entities.TDMAZone  true  "DMA Zone Data Payload"
+// @Param        id    path      int                   true  "DMA Zone ID"
+// @Param        data  body      entities.TDMAZoneReq  true  "DMA Zone Data Payload"
 // @Success      200   {object}  map[string]interface{}
 // @Failure      400   {object}  map[string]interface{}
 // @Failure      404   {object}  map[string]interface{}
 // @Failure      500   {object}  map[string]interface{}
 // @Router       /api/v1/dma-zone/{id} [put]
 func (d *DMAZoneController) UpdateDMAZoneById(c *fiber.Ctx) error {
-	req := new(entities.TDMAZone)
+	req := new(entities.TDMAZoneReq)
 	if err := c.BodyParser(req); err != nil {
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":  fiber.ErrBadRequest.Code,
 			"message": fiber.ErrBadRequest.Message,
 			"error":   err.Error(),
@@ -142,9 +151,9 @@ func (d *DMAZoneController) UpdateDMAZoneById(c *fiber.Ctx) error {
 	}
 	id, err := strconv.ParseUint(c.Params("id"), 10, 64)
 	if err != nil {
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":  fiber.ErrBadRequest.Code,
-			"message": "id is required",
+			"message": "Invalid ID format",
 			"error":   err.Error(),
 		})
 	}
@@ -168,7 +177,6 @@ func (d *DMAZoneController) UpdateDMAZoneById(c *fiber.Ctx) error {
 		"message": "DMA Zone Updated Successfully",
 		"data":    data,
 	})
-
 }
 
 // DeleteDMAZoneById godoc
@@ -185,21 +193,21 @@ func (d *DMAZoneController) UpdateDMAZoneById(c *fiber.Ctx) error {
 func (d *DMAZoneController) DeleteDMAZoneById(c *fiber.Ctx) error {
 	id, err := strconv.ParseUint(c.Params("id"), 10, 64)
 	if err != nil {
-		return c.Status(fiber.ErrBadRequest.Code).JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":  fiber.ErrBadRequest.Code,
-			"message": fiber.ErrBadRequest.Message,
+			"message": "Invalid ID format",
 			"error":   err.Error(),
 		})
 	}
-	data, err := d.dmaZoneUseCase.FindDataById(uint(id))
-	if err != nil {
+	if _, err := d.dmaZoneUseCase.FindDataById(uint(id)); err != nil {
 		return c.Status(fiber.ErrNotFound.Code).JSON(fiber.Map{
 			"status":  fiber.ErrNotFound.Code,
 			"message": fiber.ErrNotFound.Message,
 			"error":   err.Error(),
 		})
 	}
-	if err := d.dmaZoneUseCase.DeleteData(uint(id)); err != nil {
+	data, err := d.dmaZoneUseCase.DeleteData(uint(id))
+	if err != nil {
 		return c.Status(fiber.ErrInternalServerError.Code).JSON(fiber.Map{
 			"status":  fiber.ErrInternalServerError.Code,
 			"message": fiber.ErrInternalServerError.Message,

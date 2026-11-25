@@ -56,7 +56,7 @@ func (s *Server) Start() {
 
 	fiberUrl, err := utils.ConnectionUrlBuilder("fiber", s.cfg)
 	if err != nil {
-		log.Fatal("Error Building Fiber Connection URL: %v", err)
+		log.Fatalf("Error Building Fiber Connection URL: %v", err)
 	}
 
 	c := make(chan os.Signal, 1)

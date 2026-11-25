@@ -77,7 +77,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/entities.TDMAZone"
+                            "$ref": "#/definitions/entities.TDMAZoneReq"
                         }
                     }
                 ],
@@ -133,6 +133,13 @@ const docTemplate = `{
                             "additionalProperties": true
                         }
                     },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
                         "schema": {
@@ -175,7 +182,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/entities.TDMAZone"
+                            "$ref": "#/definitions/entities.TDMAZoneReq"
                         }
                     }
                 ],
@@ -223,6 +230,604 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "description": "DMA Zone ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/forecast/demand/{dma_code}": {
+            "get": {
+                "description": "ดึงผลการพยากรณ์ความต้องการใช้น้ำล่วงหน้า 24 ชม. หรือ 7 วัน พร้อมช่วงความเชื่อมั่น 80% (80% Confidence Interval) และคำแนะนำการสูบน้ำ Peak/Off-Peak ตามเกณฑ์ TOR ภาคผนวก ๔",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forecast"
+                ],
+                "summary": "Get Water Demand Forecast",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "รหัสโซน DMA เช่น DMA-SK-01, DMA-PB-01, DMA-KN-01, DMA-BKK-01",
+                        "name": "dma_code",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "24h",
+                        "description": "ช่วงเวลาพยากรณ์: '24h' (24 ชม. ล่วงหน้า) หรือ '7d' (7 วันล่วงหน้า)",
+                        "name": "range",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/forecast/metrics": {
+            "get": {
+                "description": "ดึงผลการประเมินความแม่นยำของโมเดล Machine Learning Demand Forecasting (R2, Accuracy %, RMSE, MAE) เทียบกับเกณฑ์ TOR (ความแม่นยำ \u003e= 85%) สามารถระบุ dma_code เพื่อดูเฉพาะโซน หรือเว้นว่างเพื่อดูภาพรวมทุกโซน",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forecast"
+                ],
+                "summary": "Get Model Accuracy \u0026 Evaluation Metrics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "รหัสโซน DMA เช่น DMA-03, DMA-SK-01 (หากไม่ระบุจะแสดงภาพรวมและแจกแจงทุกโซน)",
+                        "name": "dma_code",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leakage-incident": {
+            "get": {
+                "description": "ดึงรายการประวัติรับแจ้งซ่อมท่อแตกรั่ว (Leakage Incidents) พร้อมรองรับ Pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Leakage Incident"
+                ],
+                "summary": "Get Leakage Incidents",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "เลขหน้า (Page number)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "จำนวนรายการต่อหน้า (Items per page)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "เพิ่มข้อมูลประวัติรับแจ้งซ่อมท่อแตกรั่ว (Leakage Incident)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Leakage Incident"
+                ],
+                "summary": "Create Leakage Incident",
+                "parameters": [
+                    {
+                        "description": "Leakage Incident Data Payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.TLeakageIncidentReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leakage-incident/{id}": {
+            "get": {
+                "description": "ดึงข้อมูลประวัติรับแจ้งซ่อมท่อแตกรั่ว (Leakage Incident) ตาม ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Leakage Incident"
+                ],
+                "summary": "Get Leakage Incident By ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Leakage Incident ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "แก้ไขข้อมูลประวัติรับแจ้งซ่อมท่อแตกรั่ว (Leakage Incident) ตาม ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Leakage Incident"
+                ],
+                "summary": "Update Leakage Incident By ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Leakage Incident ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Leakage Incident Data Payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.TLeakageIncidentReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "ลบข้อมูลประวัติรับแจ้งซ่อมท่อแตกรั่ว (Leakage Incident) ตาม ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Leakage Incident"
+                ],
+                "summary": "Delete Leakage Incident By ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Leakage Incident ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pipe-asset": {
+            "get": {
+                "description": "ดึงรายการสินทรัพย์ท่อประปา (Pipe Assets) พร้อมรองรับ Pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pipe Asset"
+                ],
+                "summary": "Get Pipe Assets",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "เลขหน้า (Page number)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "จำนวนรายการต่อหน้า (Items per page)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "เพิ่มข้อมูลสินทรัพย์ท่อประปา (Pipe Asset)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pipe Asset"
+                ],
+                "summary": "Create Pipe Asset",
+                "parameters": [
+                    {
+                        "description": "Pipe Asset Data Payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.TPipeAssetReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pipe-asset/{id}": {
+            "get": {
+                "description": "ดึงข้อมูลสินทรัพย์ท่อประปา (Pipe Asset) ตาม ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pipe Asset"
+                ],
+                "summary": "Get Pipe Asset By ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Pipe Asset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "แก้ไขข้อมูลสินทรัพย์ท่อประปา (Pipe Asset) ตาม ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pipe Asset"
+                ],
+                "summary": "Update Pipe Asset By ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Pipe Asset ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Pipe Asset Data Payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.TPipeAssetReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "ลบข้อมูลสินทรัพย์ท่อประปา (Pipe Asset) ตาม ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Pipe Asset"
+                ],
+                "summary": "Delete Pipe Asset By ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Pipe Asset ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -350,56 +955,123 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "entities.TDMAZone": {
+        "entities.TDMAZoneReq": {
             "type": "object",
             "properties": {
                 "billed_consumption": {
-                    "description": "ปริมาณน้ำที่ขายได้ (ลบ.ม./วัน)",
                     "type": "number"
                 },
                 "branch_name": {
-                    "description": "สาขา (ตาม TOR: นำร่อง 4 สาขา)",
-                    "type": "string"
-                },
-                "created_at": {
                     "type": "string"
                 },
                 "customer_count": {
-                    "description": "จำนวนผู้ใช้น้ำในโซน",
                     "type": "integer"
                 },
                 "dma_code": {
-                    "description": "รหัส DMA เช่น DMA-01",
                     "type": "string"
                 },
                 "dma_name": {
-                    "description": "ชื่อโซน เช่น โซนเทศบาล 1",
                     "type": "string"
                 },
-                "id": {
-                    "type": "integer"
-                },
                 "nrw_ratio": {
-                    "description": "อัตราน้ำสูญเสีย % (Non-Revenue Water)",
                     "type": "number"
                 },
                 "region_code": {
-                    "description": "เขต (ตาม TOR: 10 เขต)",
                     "type": "string"
                 },
                 "status": {
-                    "description": "NORMAL, WARNING, CRITICAL (ตามเกณฑ์แจ้งเตือน)",
                     "type": "string"
                 },
                 "target_pressure": {
-                    "description": "แรงดันเป้าหมาย (bar) เช่น 2.5 (แนะนำ float64 เพื่อใช้เทียบกับ IoT)",
                     "type": "number"
                 },
                 "total_inflow": {
-                    "description": "ปริมาณน้ำจ่ายเข้าโซน (ลบ.ม./วัน)",
+                    "type": "number"
+                }
+            }
+        },
+        "entities.TLeakageIncidentReq": {
+            "type": "object",
+            "properties": {
+                "dma_code": {
+                    "type": "string"
+                },
+                "incident_type": {
+                    "type": "string"
+                },
+                "latitude": {
                     "type": "number"
                 },
-                "updated_at": {
+                "location_description": {
+                    "type": "string"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "pipe_id": {
+                    "type": "string"
+                },
+                "repair_status": {
+                    "type": "string"
+                },
+                "repaired_at": {
+                    "type": "string"
+                },
+                "reported_at": {
+                    "type": "string"
+                },
+                "severity": {
+                    "type": "string"
+                },
+                "ticket_id": {
+                    "type": "string"
+                },
+                "water_loss_estimate": {
+                    "type": "number"
+                }
+            }
+        },
+        "entities.TPipeAssetReq": {
+            "type": "object",
+            "properties": {
+                "asset_id": {
+                    "description": "รหัสสินทรัพย์จาก SAP เช่น AST-001",
+                    "type": "string"
+                },
+                "diameter": {
+                    "description": "ขนาดท่อ (มม.)",
+                    "type": "number"
+                },
+                "dma_code": {
+                    "description": "อยู่ในโซน DMA ใด",
+                    "type": "string"
+                },
+                "installation_year": {
+                    "description": "ปีที่ติดตั้ง",
+                    "type": "integer"
+                },
+                "latitude": {
+                    "description": "พิกัด GIS ละติจูด",
+                    "type": "number"
+                },
+                "length": {
+                    "description": "ความยาวท่อ (เมตร)",
+                    "type": "number"
+                },
+                "longitude": {
+                    "description": "พิกัด GIS ลองจิจูด",
+                    "type": "number"
+                },
+                "material": {
+                    "description": "วัสดุท่อ: HDPE, PVC, เหล็กเหนียว, AC",
+                    "type": "string"
+                },
+                "pipe_id": {
+                    "description": "รหัสท่อ เช่น Pipe_01",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "สถานะสินทรัพย์",
                     "type": "string"
                 }
             }

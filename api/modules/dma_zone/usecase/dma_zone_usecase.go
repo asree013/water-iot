@@ -7,17 +7,13 @@ type DMAZoneUseCase struct {
 }
 
 // AddData implements [entities.TDMAZoneUseCase].
-func (d DMAZoneUseCase) AddData(data entities.TDMAZone) (entities.TDMAZone, error) {
+func (d DMAZoneUseCase) AddData(data entities.TDMAZoneReq) (entities.TDMAZone, error) {
 	return d.TDMAZoneRepo.Create(data)
 }
 
 // DeleteData implements [entities.TDMAZoneUseCase].
-func (d DMAZoneUseCase) DeleteData(id uint) error {
-	_, err := d.TDMAZoneRepo.Delete(id)
-	if err != nil {
-		return err
-	}
-	return nil
+func (d DMAZoneUseCase) DeleteData(id uint) (entities.TDMAZone, error) {
+	return d.TDMAZoneRepo.DeleteById(id)
 }
 
 // FindDataById implements [entities.TDMAZoneUseCase].
@@ -31,8 +27,8 @@ func (d DMAZoneUseCase) FindDatas(page *int, limit *int) ([]entities.TDMAZone, e
 }
 
 // UpdateData implements [entities.TDMAZoneUseCase].
-func (d DMAZoneUseCase) UpdateData(id uint, data entities.TDMAZone) (entities.TDMAZone, error) {
-	return d.TDMAZoneRepo.Update(id, data)
+func (d DMAZoneUseCase) UpdateData(id uint, data entities.TDMAZoneReq) (entities.TDMAZone, error) {
+	return d.TDMAZoneRepo.UpdateById(id, data)
 }
 
 func NewDMAZoneUseCase(TDMAZoneRepo entities.TDMAZoneRepo) entities.TDMAZoneUseCase {

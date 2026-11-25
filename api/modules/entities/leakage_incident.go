@@ -1,8 +1,12 @@
 package entities
 
-import "time"
+import (
+	baserepository "api/modules/base_interface"
+	"time"
+)
 
 // TLeakageIncident ประวัติรับแจ้งซ่อมท่อแตกรั่วจากระบบ OCS
+// domain Entity
 type TLeakageIncident struct {
 	ID                  uint       `gorm:"primaryKey;autoIncrement" json:"id"`
 	TicketID            string     `gorm:"type:varchar(50);uniqueIndex" json:"ticket_id"` // รหัสใบแจ้งซ่อม เช่น OCS-2026-001
@@ -19,4 +23,34 @@ type TLeakageIncident struct {
 	RepairStatus        string     `gorm:"type:varchar(30)" json:"repair_status"` // PENDING, IN_PROGRESS, RESOLVED, CLOSED
 	CreatedAt           time.Time  `json:"created_at"`
 	UpdatedAt           time.Time  `json:"updated_at"`
+}
+
+// DTO
+type TLeakageIncidentReq struct {
+	TicketID            string     `gorm:"type:varchar(50);uniqueIndex" json:"ticket_id"`
+	DMACode             string     `gorm:"type:varchar(50);index" json:"dma_code"`
+	PipeID              string     `gorm:"type:varchar(50)" json:"pipe_id"`
+	IncidentType        string     `gorm:"type:varchar(50)" json:"incident_type"`
+	Severity            string     `gorm:"type:varchar(20)" json:"severity"`
+	LocationDescription string     `gorm:"type:text" json:"location_description"`
+	Latitude            float64    `json:"latitude"`
+	Longitude           float64    `json:"longitude"`
+	WaterLossEstimate   float64    `json:"water_loss_estimate"`
+	ReportedAt          time.Time  `json:"reported_at"`
+	RepairedAt          *time.Time `json:"repaired_at"`
+	RepairStatus        string     `gorm:"type:varchar(30)" json:"repair_status"`
+}
+
+type TLeakageIncidentRes struct {
+	TLeakageIncidentReq
+}
+
+// Repository interface
+type TLeakageIncidentRepo interface {
+	baserepository.IBaseRepository[TLeakageIncident, TLeakageIncidentReq]
+}
+
+// UseCase interface
+type TLeakageIncidentUseCase interface {
+	baserepository.IBaseUseCase[TLeakageIncident, TLeakageIncidentReq]
 }

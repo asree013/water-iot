@@ -10,6 +10,19 @@ import (
 	_dmazoneRepository "api/modules/dma_zone/repository"
 	_dmazoneUseCase "api/modules/dma_zone/usecase"
 
+	_pipeAssetHttp "api/modules/pipe_asset/controller"
+	_pipeAssetRepository "api/modules/pipe_asset/repository"
+	_pipeAssetUseCase "api/modules/pipe_asset/usecase"
+
+	_leakageIncidentHttp "api/modules/leakage_incident/controller"
+	_leakageIncidentRepository "api/modules/leakage_incident/repository"
+	_leakageIncidentUseCase "api/modules/leakage_incident/usecase"
+
+	_forecastHttp "api/modules/forecast/controller"
+	_forecastRepository "api/modules/forecast/repository"
+	_forecastUseCase "api/modules/forecast/usecase"
+	"api/pkg/database"
+
 	"github.com/MarceloPetrucio/go-scalar-api-reference"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -57,6 +70,39 @@ func (s *Server) MapHandler() error {
 	dmazoneRepository := _dmazoneRepository.NewDMAZoneRepository(s.db)
 	dmazoneUseCase := _dmazoneUseCase.NewDMAZoneUseCase(dmazoneRepository)
 	_dmazoneHttp.NewDMAZoneController(dmazoneGroup, dmazoneUseCase)
+
+	// route: /api/v1/pipe-asset
+	pipeAssetGroup := v1.Group("/pipe-asset")
+	pipeAssetRepository := _pipeAssetRepository.NewPipeAssetRepository(s.db)
+	pipeAssetUseCase := _pipeAssetUseCase.NewPipeAssetUseCase(pipeAssetRepository)
+	_pipeAssetHttp.NewPipeAssetController(pipeAssetGroup, pipeAssetUseCase)
+
+	// route: /api/v1/leakage-incident
+	leakageIncidentGroup := v1.Group("/leakage-incident")
+	leakageIncidentRepository := _leakageIncidentRepository.NewLeakageIncidentRepository(s.db)
+	leakageIncidentUseCase := _leakageIncidentUseCase.NewLeakageIncidentUseCase(leakageIncidentRepository)
+	_leakageIncidentHttp.NewLeakageIncidentController(leakageIncidentGroup, leakageIncidentUseCase)
+
+	// route: /api/v1/mock-data/seed
+	v1.Post("/mock-data/seed", func(c *fiber.Ctx) error {
+		if err := database.SeedAll(s.db); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status":  fiber.StatusInternalServerError,
+				"message": "Failed to seed mock data",
+				"error":   err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status":  fiber.StatusOK,
+			"message": "Mock data seeded successfully for สงขลา, เพชรบุรี, กาญจนบุรี, กทม",
+		})
+	})
+
+	// route: /api/v1/forecast
+	forecastGroup := v1.Group("/forecast")
+	forecastRepository := _forecastRepository.NewForecastRepository(s.db)
+	forecastUseCase := _forecastUseCase.NewForecastUseCase(forecastRepository)
+	_forecastHttp.NewForecastController(forecastGroup, forecastUseCase)
 
 	// route: /api/v1/sse-water-data
 	sseGroup := v1.Group("/sse-water-data")

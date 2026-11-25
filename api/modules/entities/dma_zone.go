@@ -43,10 +43,10 @@ type TDMAZoneRes struct {
 
 // repository interface
 type TDMAZoneRepo interface {
-	baserepository.IBaseRepository[TDMAZone]
+	baserepository.IBaseRepository[TDMAZone, TDMAZoneReq]
 }
 
 // useCase Interface
 type TDMAZoneUseCase interface {
-	baserepository.IBaseUseCase[TDMAZone]
+	baserepository.IBaseUseCase[TDMAZone, TDMAZoneReq]
 }
