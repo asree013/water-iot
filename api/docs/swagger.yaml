@@ -710,6 +710,73 @@ paths:
       summary: Update Pipe Asset By ID
       tags:
       - Pipe Asset
+  /api/v1/pump/health:
+    get:
+      description: ดึงคะแนนสุขภาพ (Health Score 0-100%) เวลาคาดการณ์ก่อนชำรุด (PTTF)
+        และระดับความเสี่ยงของเครื่องสูบน้ำทุกตัวในระบบตามเกณฑ์ ISO 10816-3 และ Multi-sensor
+        Degradation
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get Fleet Pump Health Scores & PTTF
+      tags:
+      - PumpHealth
+  /api/v1/pump/health/{pump_id}:
+    get:
+      description: ดึงข้อมูลสุขภาพ ค่าเซนเซอร์ SCADA (Vibration, Bearing/Motor Temp,
+        Efficiency, Operating Hours) และ PTTF เจาะจงตัวเครื่องสูบน้ำ
+      parameters:
+      - description: รหัสเครื่องสูบน้ำ เช่น PUMP-SK-01, PUMP-BKK-02, PUMP-KN-01
+        in: path
+        name: pump_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get Single Pump Health & Telemetry Detail
+      tags:
+      - PumpHealth
+  /api/v1/pump/summary:
+    get:
+      description: ดึงสถิติภาพรวมสถานะเครื่องสูบน้ำทั้งระบบ (จำนวนปั๊มปกติ/เตือน/วิกฤต,
+        คะแนนเฉลี่ย) สำหรับ Executive Dashboard
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get Pump Fleet Overview Summary
+      tags:
+      - PumpHealth
   /api/v1/sse-water-data/telemetry:
     get:
       description: เปิดการเชื่อมต่อ Server-Sent Events เพื่อรับข้อมูลเซ็นเซอร์ IoT

@@ -21,6 +21,10 @@ import (
 	_forecastHttp "api/modules/forecast/controller"
 	_forecastRepository "api/modules/forecast/repository"
 	_forecastUseCase "api/modules/forecast/usecase"
+
+	_pumpHttp "api/modules/pump_health/controller"
+	_pumpRepository "api/modules/pump_health/repository"
+	_pumpUseCase "api/modules/pump_health/usecase"
 	"api/pkg/database"
 
 	"github.com/MarceloPetrucio/go-scalar-api-reference"
@@ -103,6 +107,12 @@ func (s *Server) MapHandler() error {
 	forecastRepository := _forecastRepository.NewForecastRepository(s.db)
 	forecastUseCase := _forecastUseCase.NewForecastUseCase(forecastRepository)
 	_forecastHttp.NewForecastController(forecastGroup, forecastUseCase)
+
+	// route: /api/v1/pump
+	pumpGroup := v1.Group("/pump")
+	pumpRepository := _pumpRepository.NewPumpRepository(s.db)
+	pumpUseCase := _pumpUseCase.NewPumpUseCase(pumpRepository)
+	_pumpHttp.NewPumpController(pumpGroup, pumpUseCase)
 
 	// route: /api/v1/sse-water-data
 	sseGroup := v1.Group("/sse-water-data")

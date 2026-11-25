@@ -23,6 +23,8 @@ func main() {
 		&entities.TPipeAssets{},
 		&entities.TLeakageIncident{},
 		&entities.TDemandForecast{},
+		&entities.TPumpAsset{},
+		&entities.TPumpHealthScore{},
 	); err != nil {
 		log.Fatalf("[Seeder CLI] AutoMigrate failed: %v", err)
 	}

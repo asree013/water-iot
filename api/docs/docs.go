@@ -865,6 +865,99 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/pump/health": {
+            "get": {
+                "description": "ดึงคะแนนสุขภาพ (Health Score 0-100%) เวลาคาดการณ์ก่อนชำรุด (PTTF) และระดับความเสี่ยงของเครื่องสูบน้ำทุกตัวในระบบตามเกณฑ์ ISO 10816-3 และ Multi-sensor Degradation",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PumpHealth"
+                ],
+                "summary": "Get Fleet Pump Health Scores \u0026 PTTF",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pump/health/{pump_id}": {
+            "get": {
+                "description": "ดึงข้อมูลสุขภาพ ค่าเซนเซอร์ SCADA (Vibration, Bearing/Motor Temp, Efficiency, Operating Hours) และ PTTF เจาะจงตัวเครื่องสูบน้ำ",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PumpHealth"
+                ],
+                "summary": "Get Single Pump Health \u0026 Telemetry Detail",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "รหัสเครื่องสูบน้ำ เช่น PUMP-SK-01, PUMP-BKK-02, PUMP-KN-01",
+                        "name": "pump_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/pump/summary": {
+            "get": {
+                "description": "ดึงสถิติภาพรวมสถานะเครื่องสูบน้ำทั้งระบบ (จำนวนปั๊มปกติ/เตือน/วิกฤต, คะแนนเฉลี่ย) สำหรับ Executive Dashboard",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "PumpHealth"
+                ],
+                "summary": "Get Pump Fleet Overview Summary",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/sse-water-data/telemetry": {
             "get": {
                 "description": "เปิดการเชื่อมต่อ Server-Sent Events เพื่อรับข้อมูลเซ็นเซอร์ IoT แบบสดๆ",

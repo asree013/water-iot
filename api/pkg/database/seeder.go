@@ -603,7 +603,129 @@ func SeedAll(db *gorm.DB) error {
 		log.Printf("[Seeder] Warning: could not seed demand forecasts from JSON: %v", err)
 	}
 
+	// 5. Seed Pumps & Health Scores (จากผลลัพธ์ ML Predictive Maintenance Pipeline)
+	if err := SeedPumpsAndHealth(db); err != nil {
+		log.Printf("[Seeder] Warning: could not seed pumps and health from JSON: %v", err)
+	}
+
 	log.Println("[Seeder] Mock data seeding completed successfully!")
+	return nil
+}
+
+// SeedPumpsAndHealth โหลดข้อมูลทะเบียนปั๊มน้ำและผลประเมินสุขภาพ PTTF จาก ML Pipeline ลง MySQL
+func SeedPumpsAndHealth(db *gorm.DB) error {
+	possiblePaths := []string{
+		"../python-etl/data/pump_health_summary.json",
+		"python-etl/data/pump_health_summary.json",
+		"./data/pump_health_summary.json",
+	}
+
+	var content []byte
+	var err error
+	for _, p := range possiblePaths {
+		content, err = os.ReadFile(p)
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	type jsonPumpSummary struct {
+		Pumps map[string]struct {
+			PumpID              string  `json:"pump_id"`
+			PumpName            string  `json:"pump_name"`
+			StationName         string  `json:"station_name"`
+			DMACode             string  `json:"dma_code"`
+			RatedFlowM3H        float64 `json:"rated_flow_m3_h"`
+			RatedHeadBar        float64 `json:"rated_head_bar"`
+			RatedPowerKW        float64 `json:"rated_power_kw"`
+			InstallYear         int     `json:"install_year"`
+			Status              string  `json:"status"`
+			HealthScore         float64 `json:"health_score"`
+			HealthStatus        string  `json:"health_status"`
+			PTTFDays            int     `json:"pttf_days"`
+			PTTFHours           int     `json:"pttf_hours"`
+			FailureRisk         string  `json:"failure_risk"`
+			PrimaryStressFactor string  `json:"primary_stress_factor"`
+			Recommendation      string  `json:"recommendation"`
+			ISO10816Zone        string  `json:"iso_10816_zone"`
+			Telemetry           struct {
+				VibrationRMSMMs   float64 `json:"vibration_rms_mm_s"`
+				BearingTempC      float64 `json:"bearing_temp_c"`
+				MotorTempC        float64 `json:"motor_temp_c"`
+				FlowRateM3H       float64 `json:"flow_rate_m3_h"`
+				HeadBar           float64 `json:"head_bar"`
+				PowerKW           float64 `json:"power_kw"`
+				EfficiencyPercent float64 `json:"efficiency_percent"`
+				OperatingHours    int     `json:"operating_hours"`
+				CavitationIndex   float64 `json:"cavitation_index"`
+			} `json:"telemetry"`
+		} `json:"pumps"`
+	}
+
+	var parsed jsonPumpSummary
+	if err := json.Unmarshal(content, &parsed); err != nil {
+		return err
+	}
+
+	for _, p := range parsed.Pumps {
+		// 1. Seed Asset
+		var assetCount int64
+		db.Model(&entities.TPumpAsset{}).Where("pump_id = ?", p.PumpID).Count(&assetCount)
+		if assetCount == 0 {
+			asset := entities.TPumpAsset{
+				PumpID:       p.PumpID,
+				PumpName:     p.PumpName,
+				StationName:  p.StationName,
+				DMACode:      p.DMACode,
+				RatedFlowM3H: p.RatedFlowM3H,
+				RatedHeadBar: p.RatedHeadBar,
+				RatedPowerKW: p.RatedPowerKW,
+				InstallYear:  p.InstallYear,
+				Status:       p.Status,
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			}
+			_ = db.Create(&asset)
+		}
+
+		// 2. Seed Health Score
+		var healthCount int64
+		db.Model(&entities.TPumpHealthScore{}).Where("pump_id = ?", p.PumpID).Count(&healthCount)
+		if healthCount == 0 {
+			score := entities.TPumpHealthScore{
+				PumpID:              p.PumpID,
+				PumpName:            p.PumpName,
+				StationName:         p.StationName,
+				DMACode:             p.DMACode,
+				HealthScore:         p.HealthScore,
+				HealthStatus:        p.HealthStatus,
+				PTTFDays:            p.PTTFDays,
+				PTTFHours:           p.PTTFHours,
+				FailureRisk:         p.FailureRisk,
+				PrimaryStressFactor: p.PrimaryStressFactor,
+				Recommendation:      p.Recommendation,
+				ISO10816Zone:        p.ISO10816Zone,
+				Telemetry: entities.TPumpTelemetry{
+					VibrationRMSMMs:   p.Telemetry.VibrationRMSMMs,
+					BearingTempC:      p.Telemetry.BearingTempC,
+					MotorTempC:        p.Telemetry.MotorTempC,
+					FlowRateM3H:       p.Telemetry.FlowRateM3H,
+					HeadBar:           p.Telemetry.HeadBar,
+					PowerKW:           p.Telemetry.PowerKW,
+					EfficiencyPercent: p.Telemetry.EfficiencyPercent,
+					OperatingHours:    p.Telemetry.OperatingHours,
+					CavitationIndex:   p.Telemetry.CavitationIndex,
+				},
+				EvaluatedAt: time.Now(),
+			}
+			_ = db.Create(&score)
+		}
+	}
+
+	log.Printf("[Seeder] Successfully seeded %d Pump Assets and Health Scores into database!", len(parsed.Pumps))
 	return nil
 }
 
